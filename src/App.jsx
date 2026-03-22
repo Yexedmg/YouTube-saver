@@ -75,6 +75,15 @@ export default function App() {
     if (selectedCategory === id) setSelectedCategory('all')
   }
 
+  function handleReparent(id, newParentId) {
+    setCategories(prev => prev.map(c => {
+      if (c.id === id) return { ...c, parentId: newParentId }
+      // Promote any existing subcategories of the moved category to top-level
+      if (c.parentId === id && newParentId !== null) return { ...c, parentId: null }
+      return c
+    }))
+  }
+
   function handleToggleWatchLater(id) {
     setVideos(prev => prev.map(v => v.id === id ? { ...v, watchLater: !v.watchLater } : v))
   }
@@ -160,6 +169,7 @@ export default function App() {
         onAdd={handleAddCategory}
         onRename={handleRenameCategory}
         onDelete={handleDeleteCategory}
+        onReparent={handleReparent}
       />
 
       <main className="main">

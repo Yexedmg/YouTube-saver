@@ -14,6 +14,7 @@ export default function CategorySidebar({
   onAdd,
   onRename,
   onDelete,
+  onReparent,
 }) {
   // addingUnder: false = not adding, null = top-level, string = subcategory under that id
   const [addingUnder, setAddingUnder] = useState(false)
@@ -23,6 +24,8 @@ export default function CategorySidebar({
   const [editName, setEditName] = useState('')
   const [editColor, setEditColor] = useState('')
   const [collapsed, setCollapsed] = useState(new Set())
+  const [draggingId, setDraggingId] = useState(null)
+  const [dragOverId, setDragOverId] = useState(null)
 
   const parents = categories.filter(c => !c.parentId)
   const childrenOf = id => categories.filter(c => c.parentId === id)
@@ -52,7 +55,6 @@ export default function CategorySidebar({
     setNewName('')
     setNewColor(PRESET_COLORS[0])
     setAddingUnder(false)
-    // Auto-expand parent when adding a subcategory
     if (addingUnder) {
       setCollapsed(prev => {
         const next = new Set(prev)
@@ -119,6 +121,10 @@ export default function CategorySidebar({
     const children = childrenOf(cat.id)
     const hasChildren = children.length > 0
     const isCollapsed = collapsed.has(cat.id)
+    const isDragging = draggingId === cat.id
+    // Only top-level categories can be drop targets (1-level nesting only)
+    const isValidDropTarget = !isChild && draggingId && draggingId !== cat.id
+    const isDragOver = isValidDropTarget && dragOverId === cat.id
 
     if (editingId === cat.id) {
       return (
@@ -154,7 +160,36 @@ export default function CategorySidebar({
     }
 
     return (
-      <div key={cat.id} className={`sidebar-category-row ${isChild ? 'sidebar-category-row--sub' : ''}`}>
+      <div
+        key={cat.id}
+        className={[
+          'sidebar-category-row',
+          isChild ? 'sidebar-category-row--sub' : '',
+          isDragging ? 'sidebar-category-row--dragging' : '',
+          isDragOver ? 'sidebar-category-row--drag-over' : '',
+        ].filter(Boolean).join(' ')}
+        draggable
+        onDragStart={e => { e.dataTransfer.effectAllowed = 'move'; setDraggingId(cat.id) }}
+        onDragEnd={() => { setDraggingId(null); setDragOverId(null) }}
+        onDragOver={e => {
+          if (!isValidDropTarget) return
+          e.preventDefault()
+          e.dataTransfer.dropEffect = 'move'
+          if (dragOverId !== cat.id) setDragOverId(cat.id)
+        }}
+        onDragLeave={e => {
+          if (!e.currentTarget.contains(e.relatedTarget)) setDragOverId(null)
+        }}
+        onDrop={e => {
+          if (!isValidDropTarget) return
+          e.preventDefault()
+          onReparent(draggingId, cat.id)
+          setDraggingId(null)
+          setDragOverId(null)
+          // Auto-expand the target so the newly nested item is visible
+          setCollapsed(prev => { const n = new Set(prev); n.delete(cat.id); return n })
+        }}
+      >
         <button
           className={`sidebar-item ${selectedId === cat.id ? 'active' : ''}`}
           onClick={() => onSelect(cat.id)}
@@ -222,7 +257,6 @@ export default function CategorySidebar({
           </span>
         </button>
 
-        {/* Subcategories (only for top-level parents) */}
         {!isChild && !isCollapsed && (
           <>
             {children.map(child => renderCategoryRow(child, true))}
