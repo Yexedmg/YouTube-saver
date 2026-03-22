@@ -1,12 +1,23 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { buildWatchUrl } from '../utils/youtube'
 
 export default function VideoCard({ video, categories, onDelete, onEditCategory, onToggleWatchLater, onToggleWatched }) {
   const [imgError, setImgError] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef(null)
 
   const category = categories.find(c => c.id === video.categoryId)
   const watchUrl = buildWatchUrl(video.videoId)
+
+  // Close menu on outside click (works on both mouse and touch)
+  useEffect(() => {
+    if (!menuOpen) return
+    function handleClick(e) {
+      if (!menuRef.current?.contains(e.target)) setMenuOpen(false)
+    }
+    document.addEventListener('click', handleClick)
+    return () => document.removeEventListener('click', handleClick)
+  }, [menuOpen])
 
   return (
     <div className={`video-card ${video.watched ? 'video-card--watched' : ''}`}>
@@ -50,7 +61,7 @@ export default function VideoCard({ video, categories, onDelete, onEditCategory,
           >
             {video.title}
           </a>
-          <div className="video-menu-wrapper">
+          <div className="video-menu-wrapper" ref={menuRef}>
             <button
               className="video-menu-btn"
               onClick={() => setMenuOpen(o => !o)}
@@ -63,7 +74,7 @@ export default function VideoCard({ video, categories, onDelete, onEditCategory,
               </svg>
             </button>
             {menuOpen && (
-              <div className="video-menu" onMouseLeave={() => setMenuOpen(false)}>
+              <div className="video-menu">
                 <button onClick={() => { setMenuOpen(false); onToggleWatched(video.id) }}>
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
                     {video.watched
