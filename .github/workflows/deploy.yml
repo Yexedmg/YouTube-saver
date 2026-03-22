@@ -2,9 +2,9 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches: [V1]
   pull_request:
-    branches: [main]
+    branches: [V1]
   workflow_dispatch:
 
 permissions:
@@ -32,14 +32,14 @@ jobs:
       - run: npm run build
 
       - name: Upload artifact
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/V1'
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist
 
   deploy:
     needs: build
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/V1'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
