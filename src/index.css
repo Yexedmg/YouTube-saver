@@ -131,6 +131,22 @@ input { font: inherit; color: inherit; }
 
 .sidebar-category-row { position: relative; }
 
+.sidebar-category-row--sub { padding-left: 14px; }
+
+.sidebar-collapse-btn {
+  display: flex;
+  align-items: center;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  margin-right: -2px;
+  border-radius: 3px;
+  padding: 1px;
+}
+
+.sidebar-collapse-btn:hover { color: var(--text); }
+
+.sidebar-sub-indent { width: 10px; flex-shrink: 0; }
+
 .sidebar-cat-name {
   flex: 1;
   overflow: hidden;
@@ -183,6 +199,9 @@ input { font: inherit; color: inherit; }
   border-radius: var(--radius);
   margin: 2px 8px;
 }
+
+.sidebar-add-form--sub,
+.sidebar-edit-form--sub { margin-left: 22px; }
 
 .sidebar-add-input,
 .sidebar-edit-input {
@@ -687,6 +706,10 @@ input { font: inherit; color: inherit; }
 }
 
 .modal-category-option:hover { background: var(--surface2); }
+
+.modal-category-option--sub { padding-left: 28px; }
+
+.modal-sub-indent { width: 8px; flex-shrink: 0; }
 
 .modal-category-option input[type="radio"] { accent-color: var(--accent); width: 16px; height: 16px; }
 

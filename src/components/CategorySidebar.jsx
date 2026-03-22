@@ -15,26 +15,58 @@ export default function CategorySidebar({
   onRename,
   onDelete,
 }) {
-  const [adding, setAdding] = useState(false)
+  // addingUnder: false = not adding, null = top-level, string = subcategory under that id
+  const [addingUnder, setAddingUnder] = useState(false)
   const [newName, setNewName] = useState('')
   const [newColor, setNewColor] = useState(PRESET_COLORS[0])
   const [editingId, setEditingId] = useState(null)
   const [editName, setEditName] = useState('')
   const [editColor, setEditColor] = useState('')
+  const [collapsed, setCollapsed] = useState(new Set())
+
+  const parents = categories.filter(c => !c.parentId)
+  const childrenOf = id => categories.filter(c => c.parentId === id)
+
+  function totalCount(catId) {
+    const subIds = new Set(categories.filter(c => c.parentId === catId).map(c => c.id))
+    return videos.filter(v => v.categoryId === catId || subIds.has(v.categoryId)).length
+  }
+
+  function toggleCollapse(id) {
+    setCollapsed(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
 
   function submitAdd(e) {
     e.preventDefault()
     if (!newName.trim()) return
-    onAdd({ id: crypto.randomUUID(), name: newName.trim(), color: newColor })
+    onAdd({
+      id: crypto.randomUUID(),
+      name: newName.trim(),
+      color: newColor,
+      parentId: addingUnder || null,
+    })
     setNewName('')
     setNewColor(PRESET_COLORS[0])
-    setAdding(false)
+    setAddingUnder(false)
+    // Auto-expand parent when adding a subcategory
+    if (addingUnder) {
+      setCollapsed(prev => {
+        const next = new Set(prev)
+        next.delete(addingUnder)
+        return next
+      })
+    }
   }
 
   function startEdit(cat) {
     setEditingId(cat.id)
     setEditName(cat.name)
     setEditColor(cat.color)
+    setAddingUnder(false)
   }
 
   function submitEdit(e) {
@@ -44,9 +76,161 @@ export default function CategorySidebar({
     setEditingId(null)
   }
 
-  function countForCategory(catId) {
-    if (catId === null) return videos.filter(v => !v.categoryId).length
-    return videos.filter(v => v.categoryId === catId).length
+  function startAddSub(parentId) {
+    setAddingUnder(parentId)
+    setEditingId(null)
+    setNewName('')
+    setNewColor(PRESET_COLORS[0])
+  }
+
+  function renderAddForm(parentId) {
+    return (
+      <form
+        className={`sidebar-add-form ${parentId ? 'sidebar-add-form--sub' : ''}`}
+        onSubmit={submitAdd}
+      >
+        <input
+          className="sidebar-add-input"
+          value={newName}
+          onChange={e => setNewName(e.target.value)}
+          placeholder={parentId ? 'Subcategory name' : 'Category name'}
+          autoFocus
+        />
+        <div className="color-picker-row">
+          {PRESET_COLORS.map(c => (
+            <button
+              key={c}
+              type="button"
+              className={`color-swatch ${newColor === c ? 'selected' : ''}`}
+              style={{ backgroundColor: c }}
+              onClick={() => setNewColor(c)}
+            />
+          ))}
+        </div>
+        <div className="sidebar-edit-actions">
+          <button type="submit" className="btn-primary btn-sm">Add</button>
+          <button type="button" className="btn-secondary btn-sm" onClick={() => setAddingUnder(false)}>Cancel</button>
+        </div>
+      </form>
+    )
+  }
+
+  function renderCategoryRow(cat, isChild = false) {
+    const children = childrenOf(cat.id)
+    const hasChildren = children.length > 0
+    const isCollapsed = collapsed.has(cat.id)
+
+    if (editingId === cat.id) {
+      return (
+        <form
+          key={cat.id}
+          className={`sidebar-edit-form ${isChild ? 'sidebar-edit-form--sub' : ''}`}
+          onSubmit={submitEdit}
+        >
+          <span className="sidebar-color-dot" style={{ backgroundColor: editColor }} />
+          <input
+            className="sidebar-edit-input"
+            value={editName}
+            onChange={e => setEditName(e.target.value)}
+            autoFocus
+          />
+          <div className="color-picker-row">
+            {PRESET_COLORS.map(c => (
+              <button
+                key={c}
+                type="button"
+                className={`color-swatch ${editColor === c ? 'selected' : ''}`}
+                style={{ backgroundColor: c }}
+                onClick={() => setEditColor(c)}
+              />
+            ))}
+          </div>
+          <div className="sidebar-edit-actions">
+            <button type="submit" className="btn-primary btn-sm">Save</button>
+            <button type="button" className="btn-secondary btn-sm" onClick={() => setEditingId(null)}>Cancel</button>
+          </div>
+        </form>
+      )
+    }
+
+    return (
+      <div key={cat.id} className={`sidebar-category-row ${isChild ? 'sidebar-category-row--sub' : ''}`}>
+        <button
+          className={`sidebar-item ${selectedId === cat.id ? 'active' : ''}`}
+          onClick={() => onSelect(cat.id)}
+        >
+          {!isChild && hasChildren && (
+            <span
+              role="button"
+              className="sidebar-collapse-btn"
+              onClick={e => { e.stopPropagation(); toggleCollapse(cat.id) }}
+            >
+              <svg
+                viewBox="0 0 24 24"
+                width="12"
+                height="12"
+                fill="currentColor"
+                style={{ transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)', transition: 'transform 0.15s' }}
+              >
+                <path d="M7 10l5 5 5-5z"/>
+              </svg>
+            </span>
+          )}
+          {isChild && <span className="sidebar-sub-indent" />}
+          <span className="sidebar-color-dot" style={{ backgroundColor: cat.color }} />
+          <span className="sidebar-cat-name">{cat.name}</span>
+          <span className="sidebar-count">{totalCount(cat.id)}</span>
+          <span className="sidebar-cat-actions">
+            {!isChild && (
+              <span
+                role="button"
+                tabIndex={0}
+                className="icon-btn"
+                title="Add subcategory"
+                onClick={e => { e.stopPropagation(); startAddSub(cat.id) }}
+                onKeyDown={e => e.key === 'Enter' && startAddSub(cat.id)}
+              >
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor">
+                  <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                </svg>
+              </span>
+            )}
+            <span
+              role="button"
+              tabIndex={0}
+              className="icon-btn"
+              title="Edit"
+              onClick={e => { e.stopPropagation(); startEdit(cat) }}
+              onKeyDown={e => e.key === 'Enter' && startEdit(cat)}
+            >
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+              </svg>
+            </span>
+            <span
+              role="button"
+              tabIndex={0}
+              className="icon-btn danger"
+              title="Delete"
+              onClick={e => { e.stopPropagation(); onDelete(cat.id) }}
+              onKeyDown={e => e.key === 'Enter' && onDelete(cat.id)}
+            >
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+              </svg>
+            </span>
+          </span>
+        </button>
+
+        {/* Subcategories (only for top-level parents) */}
+        {!isChild && !isCollapsed && (
+          <>
+            {children.map(child => renderCategoryRow(child, true))}
+            {addingUnder === cat.id && renderAddForm(cat.id)}
+          </>
+        )}
+      </div>
+    )
   }
 
   return (
@@ -78,7 +262,7 @@ export default function CategorySidebar({
             <path d="M20 6h-2.18c.07-.44.18-.9.18-1.37C18 2.53 15.47 0 12.37 0H12c-3.1 0-5.63 2.53-5.63 5.63 0 .47.11.93.18 1.37H4.5A2.5 2.5 0 002 8.5v11A2.5 2.5 0 004.5 22h15a2.5 2.5 0 002.5-2.5v-11A2.5 2.5 0 0020 6z"/>
           </svg>
           Uncategorised
-          <span className="sidebar-count">{countForCategory(null)}</span>
+          <span className="sidebar-count">{videos.filter(v => !v.categoryId).length}</span>
         </button>
 
         <button
@@ -104,111 +288,21 @@ export default function CategorySidebar({
         </button>
 
         <div className="sidebar-divider" />
-
         <div className="sidebar-section-label">Categories</div>
 
-        {categories.map(cat => (
-          <div key={cat.id} className="sidebar-category-row">
-            {editingId === cat.id ? (
-              <form className="sidebar-edit-form" onSubmit={submitEdit}>
-                <span
-                  className="sidebar-color-dot"
-                  style={{ backgroundColor: editColor }}
-                />
-                <input
-                  className="sidebar-edit-input"
-                  value={editName}
-                  onChange={e => setEditName(e.target.value)}
-                  autoFocus
-                />
-                <div className="color-picker-row">
-                  {PRESET_COLORS.map(c => (
-                    <button
-                      key={c}
-                      type="button"
-                      className={`color-swatch ${editColor === c ? 'selected' : ''}`}
-                      style={{ backgroundColor: c }}
-                      onClick={() => setEditColor(c)}
-                    />
-                  ))}
-                </div>
-                <div className="sidebar-edit-actions">
-                  <button type="submit" className="btn-primary btn-sm">Save</button>
-                  <button type="button" className="btn-secondary btn-sm" onClick={() => setEditingId(null)}>Cancel</button>
-                </div>
-              </form>
-            ) : (
-              <button
-                className={`sidebar-item ${selectedId === cat.id ? 'active' : ''}`}
-                onClick={() => onSelect(cat.id)}
-              >
-                <span className="sidebar-color-dot" style={{ backgroundColor: cat.color }} />
-                <span className="sidebar-cat-name">{cat.name}</span>
-                <span className="sidebar-count">{countForCategory(cat.id)}</span>
-                <span className="sidebar-cat-actions">
-                  <span
-                    role="button"
-                    tabIndex={0}
-                    className="icon-btn"
-                    title="Edit"
-                    onClick={e => { e.stopPropagation(); startEdit(cat) }}
-                    onKeyDown={e => e.key === 'Enter' && startEdit(cat)}
-                  >
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
-                      <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
-                    </svg>
-                  </span>
-                  <span
-                    role="button"
-                    tabIndex={0}
-                    className="icon-btn danger"
-                    title="Delete"
-                    onClick={e => { e.stopPropagation(); onDelete(cat.id) }}
-                    onKeyDown={e => e.key === 'Enter' && onDelete(cat.id)}
-                  >
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
-                      <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
-                    </svg>
-                  </span>
-                </span>
-              </button>
-            )}
-          </div>
-        ))}
+        {parents.map(cat => renderCategoryRow(cat, false))}
 
-        {adding ? (
-          <form className="sidebar-add-form" onSubmit={submitAdd}>
-            <input
-              className="sidebar-add-input"
-              value={newName}
-              onChange={e => setNewName(e.target.value)}
-              placeholder="Category name"
-              autoFocus
-            />
-            <div className="color-picker-row">
-              {PRESET_COLORS.map(c => (
-                <button
-                  key={c}
-                  type="button"
-                  className={`color-swatch ${newColor === c ? 'selected' : ''}`}
-                  style={{ backgroundColor: c }}
-                  onClick={() => setNewColor(c)}
-                />
-              ))}
-            </div>
-            <div className="sidebar-edit-actions">
-              <button type="submit" className="btn-primary btn-sm">Add</button>
-              <button type="button" className="btn-secondary btn-sm" onClick={() => setAdding(false)}>Cancel</button>
-            </div>
-          </form>
-        ) : (
-          <button className="sidebar-add-category-btn" onClick={() => setAdding(true)}>
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-            </svg>
-            New category
-          </button>
-        )}
+        {addingUnder === null
+          ? renderAddForm(null)
+          : (
+            <button className="sidebar-add-category-btn" onClick={() => { setAddingUnder(null); setEditingId(null) }}>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+              </svg>
+              New category
+            </button>
+          )
+        }
       </nav>
 
       <div className="sidebar-footer">

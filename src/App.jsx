@@ -66,8 +66,11 @@ export default function App() {
   }
 
   function handleDeleteCategory(id) {
-    setCategories(prev => prev.filter(c => c.id !== id))
-    // Move videos in that category to uncategorised
+    setCategories(prev => prev
+      .filter(c => c.id !== id)
+      // Promote subcategories to top-level when their parent is deleted
+      .map(c => c.parentId === id ? { ...c, parentId: null } : c)
+    )
     setVideos(prev => prev.map(v => v.categoryId === id ? { ...v, categoryId: null } : v))
     if (selectedCategory === id) setSelectedCategory('all')
   }
@@ -117,13 +120,17 @@ export default function App() {
     reader.readAsText(file)
   }
 
+  const subcategoryIds = new Set(
+    categories.filter(c => c.parentId === selectedCategory).map(c => c.id)
+  )
+
   const filteredVideos = videos.filter(v => {
     const matchesCategory =
       selectedCategory === 'all' ? true :
       selectedCategory === 'uncategorised' ? !v.categoryId :
       selectedCategory === 'watch-later' ? !!v.watchLater :
       selectedCategory === 'watched' ? !!v.watched :
-      v.categoryId === selectedCategory
+      v.categoryId === selectedCategory || subcategoryIds.has(v.categoryId)
 
     const q = search.toLowerCase()
     const matchesSearch = !q ||

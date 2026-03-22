@@ -3,6 +3,29 @@ import { useState } from 'react'
 export default function EditCategoryModal({ video, categories, onSave, onClose }) {
   const [selectedId, setSelectedId] = useState(video.categoryId || '')
 
+  const parents = categories.filter(c => !c.parentId)
+  const childrenOf = id => categories.filter(c => c.parentId === id)
+
+  function renderOption(cat, isChild = false) {
+    return (
+      <label
+        key={cat.id}
+        className={`modal-category-option ${isChild ? 'modal-category-option--sub' : ''}`}
+      >
+        <input
+          type="radio"
+          name="category"
+          value={cat.id}
+          checked={selectedId === cat.id}
+          onChange={() => setSelectedId(cat.id)}
+        />
+        {isChild && <span className="modal-sub-indent" />}
+        <span className="modal-category-dot" style={{ backgroundColor: cat.color }} />
+        {cat.name}
+      </label>
+    )
+  }
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={e => e.stopPropagation()}>
@@ -29,18 +52,11 @@ export default function EditCategoryModal({ video, categories, onSave, onClose }
             <span className="modal-category-dot" style={{ backgroundColor: '#aaa' }} />
             Uncategorised
           </label>
-          {categories.map(cat => (
-            <label key={cat.id} className="modal-category-option">
-              <input
-                type="radio"
-                name="category"
-                value={cat.id}
-                checked={selectedId === cat.id}
-                onChange={() => setSelectedId(cat.id)}
-              />
-              <span className="modal-category-dot" style={{ backgroundColor: cat.color }} />
-              {cat.name}
-            </label>
+          {parents.map(parent => (
+            <>
+              {renderOption(parent, false)}
+              {childrenOf(parent.id).map(child => renderOption(child, true))}
+            </>
           ))}
         </div>
 
