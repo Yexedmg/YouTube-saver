@@ -731,6 +731,32 @@ input { font: inherit; color: inherit; }
 
 .btn-sm { padding: 5px 12px; font-size: 12.5px; }
 
+.backup-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.btn-backup {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--surface2);
+  color: var(--text);
+  font-size: 13.5px;
+  font-weight: 500;
+  border-radius: 8px;
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.btn-backup:hover { background: var(--border); }
+
+.btn-backup-import { color: var(--accent); border-color: var(--accent); }
+.btn-backup-import:hover { background: rgba(255,0,0,0.08); }
+
 /* ===== Scrollbar ===== */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }

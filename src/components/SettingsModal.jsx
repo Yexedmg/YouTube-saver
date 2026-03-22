@@ -1,7 +1,16 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 
-export default function SettingsModal({ apiKey, onSave, onClose }) {
+export default function SettingsModal({ apiKey, onSave, onClose, onExport, onImport }) {
   const [key, setKey] = useState(apiKey || '')
+  const fileInputRef = useRef(null)
+
+  function handleFileChange(e) {
+    const file = e.target.files[0]
+    if (file) {
+      onImport(file)
+      e.target.value = ''
+    }
+  }
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -36,6 +45,34 @@ export default function SettingsModal({ apiKey, onSave, onClose }) {
             → Enable "YouTube Data API v3" → Credentials → Create API Key.
             Without a key, video titles and thumbnails still work.
           </p>
+        </div>
+
+        <div className="settings-section">
+          <label className="settings-label">Backup & Restore</label>
+          <p className="settings-hint">
+            Export your videos and categories as a JSON file to back up or transfer your data to another device.
+          </p>
+          <div className="backup-actions">
+            <button className="btn-backup" onClick={onExport}>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                <path d="M19 9h-4V3H9v6H5l7 7 7-7zm-8 2V5h2v6h1.17L12 13.17 9.83 11H11zm-6 7h14v2H5z"/>
+              </svg>
+              Export backup
+            </button>
+            <button className="btn-backup btn-backup-import" onClick={() => fileInputRef.current?.click()}>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                <path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5z"/>
+              </svg>
+              Import backup
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".json,application/json"
+              style={{ display: 'none' }}
+              onChange={handleFileChange}
+            />
+          </div>
         </div>
 
         <div className="modal-actions">

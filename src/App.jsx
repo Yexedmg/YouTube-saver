@@ -72,6 +72,43 @@ export default function App() {
     if (selectedCategory === id) setSelectedCategory('all')
   }
 
+  function handleExport() {
+    const data = {
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      videos,
+      categories,
+    }
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `yt-saver-backup-${new Date().toISOString().slice(0, 10)}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  function handleImport(file) {
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      try {
+        const data = JSON.parse(e.target.result)
+        if (!Array.isArray(data.videos) || !Array.isArray(data.categories)) {
+          alert('Invalid backup file: missing videos or categories.')
+          return
+        }
+        if (!window.confirm(`This will replace all your current data with ${data.videos.length} video(s) and ${data.categories.length} category/categories from the backup. Continue?`)) return
+        setVideos(data.videos)
+        setCategories(data.categories)
+        setSelectedCategory('all')
+      } catch {
+        alert('Failed to read backup file. Make sure it is a valid JSON backup.')
+      }
+    }
+    reader.readAsText(file)
+  }
+
   const filteredVideos = videos.filter(v => {
     const matchesCategory =
       selectedCategory === 'all' ||
@@ -177,6 +214,8 @@ export default function App() {
           apiKey={apiKey}
           onSave={setApiKey}
           onClose={() => setShowSettings(false)}
+          onExport={handleExport}
+          onImport={handleImport}
         />
       )}
     </div>
