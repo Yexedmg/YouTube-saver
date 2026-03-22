@@ -10,6 +10,7 @@ export default function CategorySidebar({
   categories,
   selectedId,
   videos,
+  isOpen,
   onSelect,
   onAdd,
   onRename,
@@ -268,7 +269,7 @@ export default function CategorySidebar({
   }
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar ${isOpen ? 'sidebar--open' : ''}`}>
       <div className="sidebar-header">
         <svg viewBox="0 0 24 24" width="28" height="28" fill="#FF0000">
           <path d="M19.59 6.69a4.83 4.83 0 01-3.77-2.47 12.35 12.35 0 00-10.15 0A4.83 4.83 0 012.41 6.69 49.15 49.15 0 001 12a49.15 49.15 0 001.41 5.31 4.83 4.83 0 013.77 2.47 12.35 12.35 0 0010.15 0 4.83 4.83 0 013.77-2.47A49.15 49.15 0 0023 12a49.15 49.15 0 00-1.41-5.31zM9.75 15.02V8.98L15.5 12l-5.75 3.02z"/>

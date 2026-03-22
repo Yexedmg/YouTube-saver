@@ -26,6 +26,7 @@ export default function App() {
   const [editingVideo, setEditingVideo] = useState(null)
   const [showSettings, setShowSettings] = useState(false)
   const [search, setSearch] = useState('')
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   // Persist to localStorage
   useEffect(() => { localStorage.setItem(STORAGE_KEY_VIDEOS, JSON.stringify(videos)) }, [videos])
@@ -159,13 +160,20 @@ export default function App() {
     ? 'Watched'
     : categories.find(c => c.id === selectedCategory)?.name ?? 'Videos'
 
+  function handleSelectCategory(id) {
+    setSelectedCategory(id)
+    setSidebarOpen(false)
+  }
+
   return (
     <div className="app">
+      {sidebarOpen && <div className="sidebar-backdrop" onClick={() => setSidebarOpen(false)} />}
       <CategorySidebar
         categories={categories}
         selectedId={selectedCategory}
         videos={videos}
-        onSelect={setSelectedCategory}
+        isOpen={sidebarOpen}
+        onSelect={handleSelectCategory}
         onAdd={handleAddCategory}
         onRename={handleRenameCategory}
         onDelete={handleDeleteCategory}
@@ -175,6 +183,11 @@ export default function App() {
       <main className="main">
         <header className="main-header">
           <div className="main-header-left">
+            <button className="sidebar-menu-btn" onClick={() => setSidebarOpen(o => !o)} aria-label="Open menu">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+                <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+              </svg>
+            </button>
             <h1 className="main-title">{currentCategoryName}</h1>
             {filteredVideos.length > 0 && (
               <span className="main-count">{filteredVideos.length} video{filteredVideos.length !== 1 ? 's' : ''}</span>

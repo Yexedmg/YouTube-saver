@@ -841,12 +841,96 @@ input { font: inherit; color: inherit; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #555; }
 
+/* ===== Hamburger menu button (hidden on desktop) ===== */
+.sidebar-menu-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+.sidebar-menu-btn:hover { color: var(--text); background: var(--surface2); }
+
+/* ===== Sidebar backdrop (mobile only) ===== */
+.sidebar-backdrop {
+  display: none;
+}
+
 /* ===== Responsive ===== */
-@media (max-width: 640px) {
-  :root { --sidebar-width: 200px; }
-  .main { padding: 0 16px 32px; }
-  .video-grid { grid-template-columns: 1fr; }
-  .main-header { flex-direction: column; align-items: flex-start; }
-  .main-search { width: 100%; }
+@media (max-width: 700px) {
+  /* Sidebar becomes a fixed drawer */
+  .sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100%;
+    z-index: 200;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    box-shadow: none;
+  }
+  .sidebar--open {
+    transform: translateX(0);
+    box-shadow: 8px 0 32px rgba(0,0,0,0.6);
+  }
+
+  /* Backdrop */
+  .sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 199;
+  }
+
+  /* Show hamburger */
+  .sidebar-menu-btn { display: flex; }
+
+  /* Main takes full width */
+  .main { padding: 0 14px 32px; }
+
+  .main-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 14px 0 12px;
+  }
+
+  .main-header-left { gap: 10px; }
+
+  .main-title { font-size: 17px; }
+
+  .main-search-wrapper { width: 100%; }
+  .main-search { width: 100%; font-size: 15px; }
   .main-search:focus { width: 100%; }
+
+  /* Video grid: 2 columns on tablets, 1 on small phones */
+  .video-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px 10px;
+  }
+
+  /* Add video form */
+  .add-video-input-row { flex-direction: column; }
+  .add-video-btn { width: 100%; }
+
+  /* Modal: full-width on small screens */
+  .modal {
+    width: calc(100vw - 24px);
+    max-height: 90dvh;
+    overflow-y: auto;
+  }
+
+  /* Settings modal backup buttons stack */
+  .backup-actions { flex-direction: column; }
+  .btn-backup { justify-content: center; }
+}
+
+@media (max-width: 420px) {
+  .video-grid { grid-template-columns: 1fr 1fr; gap: 10px 8px; }
 }
