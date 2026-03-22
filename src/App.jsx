@@ -72,6 +72,14 @@ export default function App() {
     if (selectedCategory === id) setSelectedCategory('all')
   }
 
+  function handleToggleWatchLater(id) {
+    setVideos(prev => prev.map(v => v.id === id ? { ...v, watchLater: !v.watchLater } : v))
+  }
+
+  function handleToggleWatched(id) {
+    setVideos(prev => prev.map(v => v.id === id ? { ...v, watched: !v.watched } : v))
+  }
+
   function handleExport() {
     const data = {
       version: 1,
@@ -111,8 +119,11 @@ export default function App() {
 
   const filteredVideos = videos.filter(v => {
     const matchesCategory =
-      selectedCategory === 'all' ||
-      (selectedCategory === 'uncategorised' ? !v.categoryId : v.categoryId === selectedCategory)
+      selectedCategory === 'all' ? true :
+      selectedCategory === 'uncategorised' ? !v.categoryId :
+      selectedCategory === 'watch-later' ? !!v.watchLater :
+      selectedCategory === 'watched' ? !!v.watched :
+      v.categoryId === selectedCategory
 
     const q = search.toLowerCase()
     const matchesSearch = !q ||
@@ -126,6 +137,10 @@ export default function App() {
     ? 'All videos'
     : selectedCategory === 'uncategorised'
     ? 'Uncategorised'
+    : selectedCategory === 'watch-later'
+    ? 'Watch Later'
+    : selectedCategory === 'watched'
+    ? 'Watched'
     : categories.find(c => c.id === selectedCategory)?.name ?? 'Videos'
 
   return (
@@ -172,7 +187,7 @@ export default function App() {
         <div className="add-video-wrapper">
           <AddVideoForm
             categories={categories}
-            selectedCategoryId={selectedCategory !== 'all' && selectedCategory !== 'uncategorised' ? selectedCategory : null}
+            selectedCategoryId={selectedCategory !== 'all' && selectedCategory !== 'uncategorised' && selectedCategory !== 'watch-later' && selectedCategory !== 'watched' ? selectedCategory : null}
             apiKey={apiKey}
             onAdd={handleAddVideos}
           />
@@ -194,6 +209,8 @@ export default function App() {
                 categories={categories}
                 onDelete={handleDeleteVideo}
                 onEditCategory={setEditingVideo}
+                onToggleWatchLater={handleToggleWatchLater}
+                onToggleWatched={handleToggleWatched}
               />
             ))}
           </div>

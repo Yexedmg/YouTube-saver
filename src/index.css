@@ -453,6 +453,51 @@ input { font: inherit; color: inherit; }
   letter-spacing: 0.02em;
 }
 
+.video-watch-later-btn {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: rgba(0,0,0,0.65);
+  color: rgba(255,255,255,0.6);
+  border: none;
+  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s, color 0.15s, background 0.15s;
+  z-index: 2;
+}
+
+.video-card:hover .video-watch-later-btn,
+.video-watch-later-btn.active { opacity: 1; }
+
+.video-watch-later-btn.active { color: #FFD700; background: rgba(0,0,0,0.75); }
+.video-watch-later-btn:hover { background: rgba(0,0,0,0.85); color: #FFD700; }
+
+.video-watched-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: #4CAF50;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  pointer-events: none;
+}
+
+.video-card--watched .video-thumbnail { opacity: 0.6; }
+
+.video-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+
 .video-info {
   padding: 10px 12px 12px;
 }
