@@ -440,7 +440,6 @@ input { font: inherit; color: inherit; }
 .video-card {
   background: var(--surface);
   border-radius: var(--radius);
-  overflow: hidden;
   transition: transform 0.15s, box-shadow 0.15s;
   position: relative;
 }
@@ -457,6 +456,7 @@ input { font: inherit; color: inherit; }
   aspect-ratio: 16 / 9;
   background: #000;
   overflow: hidden;
+  border-radius: var(--radius) var(--radius) 0 0;
 }
 
 .video-thumbnail {
@@ -929,6 +929,9 @@ input { font: inherit; color: inherit; }
     border-radius: 16px 16px 0 0;
     border-bottom: none;
   }
+
+  /* Category list: let the modal handle all scrolling, no double-scroll */
+  .modal-category-list { max-height: none; overflow-y: visible; }
 
   /* Bigger touch targets in category modal */
   .modal-category-option { padding: 14px 16px; font-size: 15px; }
